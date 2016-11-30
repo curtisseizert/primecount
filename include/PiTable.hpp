@@ -23,6 +23,10 @@
 #ifndef PITABLE_HPP
 #define PITABLE_HPP
 
+#if !defined(__STDC_CONSTANT_MACROS)
+  #define __STDC_CONSTANT_MACROS
+#endif
+
 #include <libpopcnt.h>
 
 #include <stdint.h>
