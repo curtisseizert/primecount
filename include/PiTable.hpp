@@ -23,7 +23,7 @@
 #ifndef PITABLE_HPP
 #define PITABLE_HPP
 
-#include <popcount.hpp>
+#include <libpopcnt.h>
 
 #include <stdint.h>
 #include <cassert>

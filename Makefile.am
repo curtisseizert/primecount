@@ -89,7 +89,7 @@ libprimecount_la_SOURCES = \
 	include/int128.hpp \
 	include/isqrt.hpp \
 	include/min_max.hpp \
-	include/popcount.hpp \
+	include/libpopcnt.h \
 	include/pmath.hpp \
 	include/print.hpp \
 	include/primecount-internal.hpp \

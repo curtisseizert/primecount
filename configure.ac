@@ -37,26 +37,29 @@ AS_IF([test "x$enable_mpi" = "xyes"], [
 
 AM_CONDITIONAL(HAVE_MPI, test x$enable_mpi = xyes)
 
-# Enable POPCNT instruction by default
-AC_ARG_ENABLE([popcnt],
-    AC_HELP_STRING([--enable-popcnt],
-                   [enable POPCNT instruction (default yes)]))
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS -mpopcnt -Werror"
 
-AS_IF([test "x$enable_popcnt" != "xno"], [
-    AC_MSG_CHECKING(for __builtin_popcount)
-    AC_TRY_LINK(, [int x = __builtin_popcount(123);],
-                  [AC_MSG_RESULT(yes); builtin_popcount=yes; AC_DEFINE(HAVE___BUILTIN_POPCOUNT)],
-                  [AC_MSG_RESULT(no)])
+AC_MSG_CHECKING(whether $CXX accepts -mpopcnt)
+AC_TRY_LINK([#include <iostream>], [int x = 0;],
+            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcnt"; AC_DEFINE(HAVE_POPCNT)],
+            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
 
-    AC_MSG_CHECKING(for __builtin_popcountll)
-    AC_TRY_LINK(, [long long x = __builtin_popcountll(123);],
-                  [AC_MSG_RESULT(yes); builtin_popcount=yes; AC_DEFINE(HAVE___BUILTIN_POPCOUNTLL)],
-                  [AC_MSG_RESULT(no)])
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS -mpopcntd -Werror"
 
-    AS_IF([test "x$builtin_popcount" = "xyes"], [
-        AX_POPCNT
-    ])
-])
+AC_MSG_CHECKING(whether $CXX accepts -mpopcntd)
+AC_TRY_LINK([#include <iostream>], [int x = 0;],
+            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcntd"; AC_DEFINE(HAVE_POPCNT)],
+            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS -mavx2 -Werror"
+
+AC_MSG_CHECKING(whether $CXX accepts -mavx2)
+AC_TRY_LINK([#include <iostream>], [int x = 0;],
+            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mavx2"; AC_DEFINE(HAVE_AVX2)],
+            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
 
 AC_MSG_CHECKING(for int128_t)
 AC_TRY_LINK([#include <stdint.h>], [int128_t x = 0;],
