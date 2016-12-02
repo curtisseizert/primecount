@@ -103,7 +103,7 @@ static int cpuid(unsigned int *eax,
 #endif
 }
 
-#endif
+#endif /* cpuid */
 
 #if defined(HAVE_POPCNT)
 
@@ -113,14 +113,14 @@ static int cpuid(unsigned int *eax,
      defined(_WIN32) || \
      defined(_WIN64))
 
-static int init_has_popcnt()
+static int has_popcnt_cpuid()
 {
   unsigned int eax = 1;
   unsigned int ebx;
   unsigned int ecx = 0;
   unsigned int edx;
 
-  if (cpuid(&eax, &ebx, &ecx, &edx) != -1)
+  if (cpuid(&eax, &ebx, &ecx, &edx))
   {
     return (ecx & bit_POPCNT) != 0;
   }
@@ -130,7 +130,7 @@ static int init_has_popcnt()
 
 static int has_popcnt()
 {
-  static int popcnt = init_has_popcnt();
+  static int popcnt = has_popcnt_cpuid();
   return popcnt;
 }
 
@@ -149,14 +149,14 @@ static int has_popcnt()
 
 #if defined(HAVE_AVX2)
 
-static int init_has_avx2()
+static int has_avx2_cpuid()
 {
   unsigned int eax = 7;
   unsigned int ebx;
   unsigned int ecx = 0;
   unsigned int edx;
 
-  if (cpuid(&eax, &ebx, &ecx, &edx) != -1)
+  if (cpuid(&eax, &ebx, &ecx, &edx))
   {
     return (ebx & bit_AVX2) != 0;
   }
@@ -166,7 +166,7 @@ static int init_has_avx2()
 
 static int has_avx2()
 {
-  static int avx2 = init_has_avx2();
+  static int avx2 = has_avx2_cpuid();
   return avx2 ;
 }
 
@@ -247,6 +247,9 @@ inline uint64_t popcnt_u64(uint64_t x)
 
 #endif
 
+/// Portable 64-bit popcount function, uses POPCNT if the CPU
+/// supports it, else a pure integer algorithm.
+///
 inline uint64_t popcount_u64(uint64_t x)
 {
 #if defined(HAVE_POPCNT)
@@ -264,9 +267,6 @@ inline uint64_t popcount_u64(uint64_t x)
 ///
 static uint64_t popcnt_u64_unrolled(const uint64_t* data, uint64_t size)
 {
-  if (size == 0)
-    return 0;
-
   uint64_t sum0 = 0, sum1 = 0, sum2 = 0, sum3 = 0;
   uint64_t limit = size - size % 4;
   uint64_t i = 0;
@@ -304,9 +304,6 @@ inline void CSA(uint64_t& h, uint64_t& l, uint64_t a, uint64_t b, uint64_t c)
 ///
 static uint64_t popcnt_harley_seal(const uint64_t* data, uint64_t size)
 {
-  if (size == 0)
-    return 0;
-
   uint64_t total = 0;
   uint64_t ones = 0, twos = 0, fours = 0, eights = 0, sixteens = 0;
   uint64_t twosA, twosB, foursA, foursB, eightsA, eightsB;
@@ -374,11 +371,14 @@ inline void CSA_m256i(__m256i& h,
   l = u ^ c;
 }
 
+/// AVX2 Harley-Seal popcount (4th iteration).
+/// The algorithm is based on the paper "Faster Population Counts
+/// using AVX2 Instructions" by Daniel Lemire, Nathan Kurz and
+/// Wojciech Mula (23 Nov 2016).
+/// @see https://arxiv.org/abs/1611.07612
+///
 static uint64_t popcnt_harley_seal_avx2(const __m256i* data, uint64_t size)
 {
-  if (size == 0)
-    return 0;
-
   __m256i total = _mm256_setzero_si256();
   __m256i ones = _mm256_setzero_si256();
   __m256i twos = _mm256_setzero_si256();
@@ -428,35 +428,51 @@ static uint64_t popcnt_harley_seal_avx2(const __m256i* data, uint64_t size)
 
 #endif /* HAVE_AVX2 */
 
-static uint64_t popcnt(const void* data, uint64_t size)
+/// Align data to 8 bytes boundary
+inline void align8(const uint8_t*& data,
+                   uint64_t* size,
+                   uint64_t* total)
+{
+  for (; *size > 0 && (uintptr_t) data % 8 != 0; data++)
+  {
+    *total += popcount_u64(*data);
+    *size -= 1;
+  }
+}
+
+/// Align data to 32 bytes boundary
+inline void align32(const uint64_t*& data,
+                    uint64_t* size,
+                    uint64_t* total)
+{
+  for (; *size >= 8 && (uintptr_t) data % 32 != 0; data++)
+  {
+    *total += popcount_u64(*data);
+    *size -= 8;
+  }
+}
+
+/// Count the number of 1 bits in the data array.
+/// @param data  An array
+/// @param size  Size of data in bytes
+///
+static uint64_t popcnt(const void* data,
+                       uint64_t size)
 {
   uint64_t total = 0;
+
   const uint8_t* data8 = (const uint8_t*) data;
-
-  // align memory to 32 bytes boundary
-  while (size > 0 && (uintptr_t) data8 % 8 != 0)
-  {
-    total += popcount_u64(*data8++);
-    size -= 1;
-  }
-
+  align8(data8, &size, &total);
   const uint64_t* data64 = (const uint64_t*) data8;
 
 #if defined(HAVE_AVX2)
 
-  // AVX2 popcount is faster than POPCNT
+  // AVX2 popcount is faster than POPCNT 
   // for array sizes >= 1 kilobyte
   if (size >= 1024 &&
       has_avx2())
   {
-    // align memory to 32 bytes boundary
-    while (size >= 8 && (uintptr_t) data64 % 32 != 0)
-    {
-      total += popcount_u64(*data64++);
-      size -= 8;
-    }
-
-    // process remaining 256-bit words
+    align32(data64, &size, &total);
     total += popcnt_harley_seal_avx2((const __m256i*) data64, size / 32);
     data64 += (size / 32) * 4;
     size = size % 32;
