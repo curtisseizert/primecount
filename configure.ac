@@ -37,29 +37,43 @@ AS_IF([test "x$enable_mpi" = "xyes"], [
 
 AM_CONDITIONAL(HAVE_MPI, test x$enable_mpi = xyes)
 
-old_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS -mpopcnt -Werror"
+# Enable POPCNT instruction by default
+AC_ARG_ENABLE([popcnt],
+    AC_HELP_STRING([--enable-popcnt],
+                   [enable POPCNT instruction (default yes)]))
 
-AC_MSG_CHECKING(whether $CXX accepts -mpopcnt)
-AC_TRY_LINK([#include <iostream>], [int x = 0;],
-            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcnt"; AC_DEFINE(HAVE_POPCNT)],
-            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+AS_IF([test "x$enable_popcnt" != "xno"], [
+    old_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS -mpopcnt -Werror"
 
-old_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS -mpopcntd -Werror"
+    AC_MSG_CHECKING(whether $CXX accepts -mpopcnt)
+    AC_TRY_LINK([#include <iostream>], [int x = 0;],
+                [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcnt"; AC_DEFINE(HAVE_POPCNT)],
+                [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
 
-AC_MSG_CHECKING(whether $CXX accepts -mpopcntd)
-AC_TRY_LINK([#include <iostream>], [int x = 0;],
-            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcntd"; AC_DEFINE(HAVE_POPCNT)],
-            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+    old_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS -mpopcntd -Werror"
 
-old_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS -mavx2 -Werror"
+    AC_MSG_CHECKING(whether $CXX accepts -mpopcntd)
+    AC_TRY_LINK([#include <iostream>], [int x = 0;],
+                [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mpopcntd"; AC_DEFINE(HAVE_POPCNT)],
+                [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+])
 
-AC_MSG_CHECKING(whether $CXX accepts -mavx2)
-AC_TRY_LINK([#include <iostream>], [int x = 0;],
-            [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mavx2"; AC_DEFINE(HAVE_AVX2)],
-            [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+# Enable AVX2 by default on x86-64 CPUs
+AC_ARG_ENABLE([avx2],
+    AC_HELP_STRING([--enable-avx2],
+                   [enable AVX2 on x86-64 CPUs (default yes)]))
+
+AS_IF([test "x$enable_avx2" != "xno"], [
+    old_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS -mavx2 -Werror"
+
+    AC_MSG_CHECKING(whether $CXX accepts -mavx2)
+    AC_TRY_LINK([#include <iostream>], [int x = 0;],
+                [AC_MSG_RESULT(yes); CXXFLAGS="$old_CXXFLAGS -mavx2"; AC_DEFINE(HAVE_AVX2)],
+                [AC_MSG_RESULT(no); CXXFLAGS=$old_CXXFLAGS])
+])
 
 AC_MSG_CHECKING(for int128_t)
 AC_TRY_LINK([#include <stdint.h>], [int128_t x = 0;],
