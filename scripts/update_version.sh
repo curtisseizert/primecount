@@ -49,7 +49,7 @@ for i in $(echo README.md \
                 include/primecount.hpp)
 do
     echo "Update version in $i"
-    sed "s/$old_major\.$old_minor\./$new_version/g" $i > $i.tmp
+    sed "s/$old_major\.$old_minor/$new_version/g" $i > $i.tmp
     mv -f $i.tmp $i
 done
 
