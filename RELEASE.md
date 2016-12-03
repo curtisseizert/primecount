@@ -1,20 +1,10 @@
-Hacking on primecount
-=====================
-
-### Hacking on Unix-like OSes
+Release process
+===============
 
 Clone or fork primecount:
 ```sh
 $ git clone git://github.com/kimwalisch/primecount.git
 ```
-
-In order to hack primecount you need to have installed a C++ compiler
-and the GNU Build System (a.k.a. Autotools). To install the GNU Build
-System install
-[GNU Autoconf](http://www.gnu.org/software/autoconf/),
-[GNU Automake](http://www.gnu.org/software/automake/) and
-[GNU Libtool](http://www.gnu.org/software/libtool/) using your packet
-manager.
 
 Build primecount using:
 ```sh
@@ -35,12 +25,19 @@ $ ./build.sh
 
 ### Versioning
 
-* Increase version number in [include/primecount.hpp](include/primecount.hpp)
-* Increase version number in _**Build instructions**_ section in [README.md](README.md)
-* Increase version number in _**Build instructions**_ section in [doc/primecount-MPI.md](doc/primecount-MPI.md)
-* Increase version number in [configure.ac](configure.ac) in ```AC_INIT```
-* [Increase Libtool version](http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html) number in [configure.ac](configure.ac) in ```AC_SUBST```
-* Update to current year in [src/app/help.cpp](src/help.cpp)
+Increase the primecount version and the primecount libtool version before
+each new release. The ```update_version.sh``` script automatically
+updates the version (and release date) in all files.
+
+```sh
+cd scripts
+
+# Usage example: update primecount version to 1.2.3 and 
+# update primecount libtool version to 7:0:0
+./update_version.sh 1.2.3 7:0:0
+```
+[This page](https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html)
+explains libtool versioning.
 
 ### Release process
 
