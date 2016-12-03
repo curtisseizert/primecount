@@ -34,6 +34,7 @@ EXTRA_DIST = \
 	doc/primecount-MPI.md \
 	scripts/find_fastest_alpha.sh \
 	scripts/worktodo.sh \
+	scripts/update_version.sh \
 	src/msvc/has_openmp.cpp \
 	Makefile.msvc \
 	README.md
