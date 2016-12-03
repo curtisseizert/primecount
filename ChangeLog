@@ -1,3 +1,14 @@
+2016-12-03 Kim Walisch  <kim.walisch@gmail.com>
+
+  Version 3.5 released.
+
+  This version runs up to 5% faster due to a new AVX2 popcount
+  algorithm which speeds up the computation of the hard special
+  leaves in the range [10^17, 10^23].
+
+  * libpopcnt.h: AVX2 & POPCNT popcount algorithm.
+  * configure.ac: New --disable-popcnt, --disable-avx2.
+
 2016-08-06 Kim Walisch  <kim.walisch@gmail.com>
 
   Version 3.4 released.
